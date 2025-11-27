@@ -1,0 +1,11 @@
+label_idx,condition_name
+0,Allergic Contact Dermatitis
+1,Drug Rash
+2,Eczema
+3,Folliculitis
+4,Herpes Zoster
+5,Insect Bite
+6,Irritant Contact Dermatitis
+7,Psoriasis
+8,Tinea
+9,Urticaria

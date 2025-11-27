@@ -6,8 +6,6 @@ IMAGES_BASE_DIR = 'data/images/'
 OUTPUT_CSV = 'dataset.csv'
 
 CONDITIONS = ['Eczema', 'Allergic Contact Dermatitis', 'Insect Bite',
-              'Urticaria', 'Psoriasis', 'Folliculitis', 'Irritant Contact Dermatitis',
-              'Tinea', 'Herpes Zoster', 'Drug Rash']
+              'Urticaria','Folliculitis']
 
-
-NUM_CLASSES = 10
+NUM_CLASSES = 5

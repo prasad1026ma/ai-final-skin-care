@@ -1,27 +1,26 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from data_cleaning import SkinDataset, get_transforms
+from skin_dataset import SkinDataset
+from data_cleaning import  process_scin_dataset,load_dataset
 from sklearn.model_selection import train_test_split
 from cnn import Cnn
+from res_net import ResNetClassifier
+from constants import LABELS_CSV_PATH, IMAGES_BASE_DIR, CASES_CSV_PATH, OUTPUT_CSV, NUM_CLASSES
 
-def split_test_train(image_paths, labels, test_split, val_split):
-    train_val_paths, test_paths, train_val_labels, test_labels = train_test_split(
-        image_paths, labels, test_size=test_split, stratify=labels, random_state=42
+def split_train_test(image_paths, labels, test_split=0.2):
+    train_paths, test_paths, train_labels, test_labels = train_test_split(
+        image_paths,
+        labels,
+        test_size=test_split,
+        stratify=labels,
+        random_state=42
     )
-
-    val_size_adjusted = val_split / (1 - test_split)
-    train_paths, val_paths, train_labels, val_labels = train_test_split(
-        train_val_paths, train_val_labels, test_size=val_size_adjusted,
-        stratify=train_val_labels, random_state=42
-    )
-
-    return (train_paths, train_labels), (val_paths, val_labels), (test_paths, test_labels)
-
+    return (train_paths, train_labels), (test_paths, test_labels)
 
 def train_epoch(model, dataloader, criterion, optimizer, device):
     model.train()
-    running_loss = 0.0
+    running_loss = 0
     correct = 0
     total = 0
 
@@ -31,69 +30,97 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
         optimizer.zero_grad()
         outputs = model(images)
         loss = criterion(outputs, labels)
-
         loss.backward()
         optimizer.step()
 
         running_loss += loss.item()
-        _, predicted = torch.max(outputs.data, 1)
+        _, preds = torch.max(outputs, 1)
+        correct += (preds == labels).sum().item()
         total += labels.size(0)
-        correct += (predicted == labels).sum().item()
 
     return running_loss / len(dataloader), 100 * correct / total
 
-def validate(model, dataloader, criterion):
-    """ checks to ensure that the data isnt overfitting"""
+def test_model(model, dataloader, criterion, device):
     model.eval()
-    running_loss = 0.0
+    running_loss = 0
     correct = 0
     total = 0
 
     with torch.no_grad():
         for images, labels in dataloader:
-            images, labels = images, labels
+            images, labels = images.to(device), labels.to(device)
+
             outputs = model(images)
             loss = criterion(outputs, labels)
 
             running_loss += loss.item()
-            _, predicted = torch.max(outputs.data, 1)
+            _, preds = torch.max(outputs, 1)
+            correct += (preds == labels).sum().item()
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
 
     return running_loss / len(dataloader), 100 * correct / total
+def training_pipeline(image_paths, labels, num_classes, epochs=10, batch_size=64, input_size=224):
 
-def training_pipline(image_paths, labels, num_classes, epochs=10, batch_size=32,
-                input_size=224):
-    (train_paths, train_labels), (val_paths, val_labels), (test_paths, test_labels) = (
-        split_test_train(image_paths, labels))
-    train_dataset = SkinDataset(train_paths, train_labels, transform=get_transforms(train=True))
-    val_dataset = SkinDataset(val_paths, val_labels, transform=get_transforms(train=False))
-    test_dataset = SkinDataset(test_paths, test_labels, transform=get_transforms(train=False))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
 
-    # Create dataloaders
+    (train_paths, train_labels), (test_paths, test_labels) = split_train_test(image_paths, labels)
+
+    # Create datasets
+    train_dataset = SkinDataset(train_paths, train_labels, transform=SkinDataset.get_transforms(train=True))
+    test_dataset = SkinDataset(test_paths,  test_labels,  transform=SkinDataset.get_transforms(train=False))
+
+    # DataLoaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+    test_loader = DataLoader(test_dataset,  batch_size=batch_size, shuffle=False, num_workers=4)
 
-    model = Cnn(num_classes=num_classes, input_size=input_size)
-    # loss and optimizer
+    # CNN model
+    model = Cnn(num_classes=num_classes, input_size=224)
+
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.5, patience=2, verbose=True
+    )
 
-    best_val_acc = 0.0
+    print(f"Beginning Training Process")
+    print(f"Training samples: {len(train_dataset)}")
+    print(f"Test samples: {len(test_dataset)}")
+    print(f"Number of classes: {num_classes}\n")
+
+    # Train for N epochs
     for epoch in range(epochs):
-        train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer)
-        val_loss, val_acc = validate(model, val_loader, criterion)
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
-            torch.save(model.state_dict(), 'best_skin_classifier.pth')
-            print(f'Model saved with validation accuracy: {val_acc:.2f}%')
+        train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
+        print(f"Epoch {epoch+1}/{epochs} | Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}%")
+        scheduler.step(train_loss)
 
-        model.load_state_dict(torch.load('best_skin_classifier.pth'))
-        test_loss, test_acc = validate(model, test_loader, criterion)
-        print(f'Final Model Test Accuracy: {test_acc}')
 
-        return model
+    # Final test evaluation
+    test_loss, test_acc = test_model(model, test_loader, criterion, device)
+    torch.save({
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+        }, 'best_model.pth')
+    print(f"\nFINAL TEST ACCURACY: {test_acc:.2f}%")
+    return model
+
+
+if __name__ == "__main__":
+    dataset_path = process_scin_dataset(
+        cases_csv_path=CASES_CSV_PATH,
+        labels_csv_path=LABELS_CSV_PATH,
+        images_base_dir=IMAGES_BASE_DIR,
+        output_csv=OUTPUT_CSV
+    )
+    image_paths, labels = load_dataset(OUTPUT_CSV)
+    dataset = SkinDataset(
+        image_paths,
+        labels,
+        transform=SkinDataset.get_transforms(train=True)
+    )
+
+    model = training_pipeline(image_paths, labels, num_classes=10)
+
 
 
 

@@ -2,26 +2,14 @@ import ast
 import pandas as pd
 from pathlib import Path
 from constants import CONDITIONS
+from skin_dataset import SkinDataset
 
 def process_scin_dataset(cases_csv_path, labels_csv_path, images_base_dir, output_csv):
+
     cases_df = pd.read_csv(cases_csv_path, dtype={'case_id': str})
     labels_df = pd.read_csv(labels_csv_path, dtype={'case_id': str})
     merged_df = pd.merge(cases_df, labels_df, on='case_id', how='inner')
-    label_column = None
-
-    # Try common label column names
-    possible_label_cols = [
-        'weighted_skin_condition_label',
-        'dermatologist_skin_condition_on_label_name',
-        'skin_condition_label',
-        'condition_label',
-        'label'
-    ]
-
-    for col in possible_label_cols:
-        if col in merged_df.columns:
-            label_column = col
-            break
+    label_column = 'weighted_skin_condition_label'
 
     merged_df = merged_df[merged_df[label_column].notna()].copy()
 
@@ -115,7 +103,6 @@ def load_dataset(csv_path='dataset.csv'):
     df = df.dropna(subset=['labeled_condition_str', 'image_path']).copy()
     df = df[df['labeled_condition_str'].isin(CONDITIONS)].copy()
 
-
     condition_counts = df['labeled_condition_str'].value_counts()
     classes_to_remove = condition_counts[condition_counts < 2].index.tolist()
 
@@ -151,7 +138,6 @@ if __name__ == "__main__":
             labels,
             transform=SkinDataset.get_transforms(train=True)
         )
-
     except Exception as e:
         print(f"Error: {e}")
 

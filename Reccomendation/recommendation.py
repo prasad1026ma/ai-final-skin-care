@@ -6,7 +6,10 @@ from data_cleaning import (
     sentence_embeddings
 )
 
-# FASTTEXT MODEL TRAINING AND RECOMMENDATION ENGINE
+""""
+SKINCARE RECOMMENDATION ENGINE
+FASTTEXT EMBEDDING & COSINE SIMILARITY BASED RECOMMENDATION SYSTEM
+"""
 class SkincareRecommendationEngine:
   
     # INITIALIZATION
@@ -53,32 +56,15 @@ class SkincareRecommendationEngine:
         similarity = np.dot(vec_a, vec_b) / (norm_a * norm_b)
         return max(0.0, min(1.0, similarity))
     
-    # GET BENEFICIAL AND HARMFUL INGREDIENTS FOR A CONDITION
-    def get_condition_ingredients(self, condition: str) -> tuple:
-
-        condition_row = self.conditions_df[
-            self.conditions_df['Condition'] == condition
-        ]
-
-        if condition_row.empty:
-            raise ValueError(f"Condition '{condition}' not found. "
-                           f"Supported: {', '.join(self.supported_conditions)}")
-
-        beneficial = condition_row.iloc[0]['Ingredients_to_Use']
-        harmful = condition_row.iloc[0]['Ingredients_to_Avoid']
-
-        return beneficial, harmful
+    # CALCULATE RECOMMENDATION SCORE
+    def calculate_recommendation_score(self, beneficial_sim: np.ndarray, harmful_sim: np.ndarray) -> np.ndarray:
+        return (beneficial_sim ** 2) * (1.0 - (harmful_sim ** 2))
 
     # RECOMMEND TOP 3 PRODUCTS FOR A GIVEN CONDITION
     def recommend_top_3(self, condition: str) -> list:
-        if condition not in self.condition_embeddings:
-            raise ValueError(f"Condition '{condition}' not found. "
-                           f"Supported: {', '.join(self.supported_conditions)}")
 
         beneficial_embedding = self.condition_embeddings[condition]
         harmful_embedding = self.harmful_embeddings[condition]
-
-        beneficial_text, harmful_text = self.get_condition_ingredients(condition)
 
         beneficial_similarities = []
         harmful_similarities = []
@@ -93,10 +79,7 @@ class SkincareRecommendationEngine:
         beneficial_similarities = np.array(beneficial_similarities)
         harmful_similarities = np.array(harmful_similarities)
 
-        '''
-        Scoring formula ************
-        '''
-        scores = (beneficial_similarities ** 2) * (1.0 - (harmful_similarities ** 2))
+        scores = self.calculate_recommendation_score(beneficial_similarities, harmful_similarities)
 
         top_3 = np.argsort(scores)[::-1][:3]
 
@@ -117,11 +100,25 @@ class SkincareRecommendationEngine:
             })
 
         return recommendations
-
+    
+    """
+    HELPER METHODS FOR EXTERNAL EVAL
+    """
+    # GET SUPPORTED CONDITIONS
     def get_supported_conditions(self) -> list:
         return self.supported_conditions
+    
+    # GET BENEFICIAL AND HARMFUL INGREDIENTS FOR A CONDITION
+    def get_condition_ingredients(self, condition: str) -> tuple:
 
+        condition_row = self.conditions_df[
+            self.conditions_df['Condition'] == condition
+        ]
 
+        beneficial = condition_row.iloc[0]['Ingredients_to_Use']
+        harmful = condition_row.iloc[0]['Ingredients_to_Avoid']
+
+        return beneficial, harmful
 
 # SAMPLE USAGE
 def main():

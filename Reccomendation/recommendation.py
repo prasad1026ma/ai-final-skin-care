@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from data_cleaning import (
-    train_fasttext,
+    train_word2vec,
     prepare_word_dict,
     sentence_embeddings
 )
@@ -16,7 +16,7 @@ class SkincareRecommendationEngine:
         self.conditions_df = pd.read_csv(conditions_path)
 
         corpus = prepare_word_dict(self.conditions_df, self.products_df)
-        self.model = train_fasttext(corpus)
+        self.model = train_word2vec(corpus)
 
         self.condition_embeddings = {}
         self.harmful_embeddings = {}

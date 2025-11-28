@@ -1,14 +1,14 @@
 import torch
 import torch.nn as nn
 from PIL import Image
-from res_net import build_resnet
+from Classification.modeling.res_net import build_resnet
 from skin_dataset import SkinDataset
 import pandas as pd
 
 def load_model(model_path='best_model.pth', num_classes=5, device=None):
     if device is None:
         device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
-    model = build_resnet(num_classes=num_classes, version='resnet18', pretrained=False)
+    model = build_resnet(num_classes=num_classes)
     model.load_state_dict(torch.load(model_path, map_location=device)['model_state_dict'])
     model.to(device)
     model.eval()
@@ -32,18 +32,22 @@ def predict(image_path, model, device, label_mapping, input_size=224):
     confidence = top_prob.item() * 100
     return predicted_label, confidence
 
-if __name__ == "__main__":
+
+def run_classification_pipeline(image_path, input_size):
     model_path = 'modeling/best_model.pth'
     mapping_file = 'data/label_mapping.csv'
-    input_size = 224
-
     model, device = load_model(model_path=model_path, num_classes=5)
     label_mapping = load_label_mapping(mapping_file)
-
-    image_path = input("Enter the path to the skin lesion image: ").strip()
 
     # Run prediction
     predicted_class, confidence = predict(image_path, model, device, label_mapping, input_size)
 
+    return predicted_class, confidence
+
+if __name__ == "__main__":
+    image_path = input("Enter the path to the skin lesion image: ").strip()
+    input_size = 224
+
+    predicted_class, confidence = run_classification_pipeline(image_path, input_size)
     print(f"\nPredicted Skin Lesion: {predicted_class}")
     print(f"Confidence: {confidence:.2f}%")

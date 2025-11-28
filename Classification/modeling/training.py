@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from skin_dataset import SkinDataset
-from data_cleaning import  process_scin_dataset,load_dataset
+from Classification.skin_dataset import SkinDataset
+from Classification.data_cleaning import process_scin_dataset,load_dataset
 from sklearn.model_selection import train_test_split
 from cnn import Cnn
-from constants import LABELS_CSV_PATH, IMAGES_BASE_DIR, CASES_CSV_PATH, OUTPUT_CSV, NUM_CLASSES
+from Classification.constants import LABELS_CSV_PATH, IMAGES_BASE_DIR, CASES_CSV_PATH, OUTPUT_CSV, NUM_CLASSES
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
@@ -15,7 +15,7 @@ def split_train_test(image_paths, labels, test_split=0.2):
         image_paths,
         labels,
         test_size=test_split,
-        stratify=labels,
+        stratify=[np.argmax(l) for l in labels],
         random_state=42
     )
     return (train_paths, train_labels), (test_paths, test_labels)
@@ -122,14 +122,7 @@ if __name__ == "__main__":
         output_csv=OUTPUT_CSV
     )
     image_paths, labels = load_dataset(OUTPUT_CSV)
-    dataset = SkinDataset(
-        image_paths,
-        labels,
-        transform=SkinDataset.get_transforms(train=True)
-    )
-
     model = training_pipeline(image_paths, labels, num_classes=NUM_CLASSES, epochs=30, input_size=256)
-
 
 
 

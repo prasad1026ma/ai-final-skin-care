@@ -1,11 +1,10 @@
 import ast
 import pandas as pd
 from pathlib import Path
-from constants import CONDITIONS
-from skin_dataset import SkinDataset
+from Classification.constants import CONDITIONS
+from Classification.skin_dataset import SkinDataset
 
 def process_scin_dataset(cases_csv_path, labels_csv_path, images_base_dir, output_csv):
-
     cases_df = pd.read_csv(cases_csv_path, dtype={'case_id': str})
     labels_df = pd.read_csv(labels_csv_path, dtype={'case_id': str})
     merged_df = pd.merge(cases_df, labels_df, on='case_id', how='inner')
@@ -130,9 +129,9 @@ if __name__ == "__main__":
             cases_csv_path='data/scin_cases.csv',
             labels_csv_path='data/scin_labels.csv',
             images_base_dir='data/images/',
-            output_csv='dataset.csv'
+            output_csv='data/dataset.csv'
         )
-        image_paths ,labels = load_dataset('dataset.csv')
+        image_paths,labels = load_dataset('data/dataset.csv')
         dataset = SkinDataset(
             image_paths,
             labels,

@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from Classification.skin_dataset import SkinDataset
 from Classification.data_cleaning import process_scin_dataset,load_dataset
 from sklearn.model_selection import train_test_split
-from cnn import Cnn
+from Classification.modeling.cnn import Cnn
 from Classification.constants import LABELS_CSV_PATH, IMAGES_BASE_DIR, CASES_CSV_PATH, OUTPUT_CSV, NUM_CLASSES
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np

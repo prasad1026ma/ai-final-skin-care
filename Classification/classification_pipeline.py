@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from Classification.modeling.res_net import build_resnet
-from skin_dataset import SkinDataset
+from Classification.skin_dataset import SkinDataset
 import pandas as pd
 
 def load_model(model_path='best_model.pth', num_classes=5, device=None):
@@ -34,8 +34,8 @@ def predict(image_path, model, device, label_mapping, input_size=224):
 
 
 def run_classification_pipeline(image_path, input_size):
-    model_path = 'modeling/best_model.pth'
-    mapping_file = 'data/label_mapping.csv'
+    model_path = 'Classification/modeling/best_model.pth'
+    mapping_file = 'Classification/data/label_mapping.csv'
     model, device = load_model(model_path=model_path, num_classes=5)
     label_mapping = load_label_mapping(mapping_file)
 

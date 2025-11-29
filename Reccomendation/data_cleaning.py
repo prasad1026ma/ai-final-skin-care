@@ -63,8 +63,8 @@ def sentence_embeddings(phrase: str, model: Word2Vec) -> np.ndarray:
 
 
 def pre_process_data():
-    df_ingredients = pd.read_csv("dermatology_ingredients.csv")
-    df_products = pd.read_csv("cosmetic_p.csv")
+    df_ingredients = pd.read_csv("Reccomendation/dermatology_ingredients.csv")
+    df_products = pd.read_csv("Reccomendation/cosmetic_p.csv")
 
     print("Data loaded successfully")
     print("Training Word2Vec model:")

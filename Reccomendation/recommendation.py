@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from data_cleaning import (
+from Reccomendation.data_cleaning import (
     train_word2vec,
     prepare_word_dict,
     sentence_embeddings
@@ -61,7 +61,19 @@ class SkincareRecommendationEngine:
         return (beneficial_sim ** 2) * (1.0 - (harmful_sim ** 2))
 
     # RECOMMEND TOP 3 PRODUCTS FOR A GIVEN CONDITION
-    def recommend_top_3(self, condition: str) -> list:
+    def recommend_top_3(self, condition: str, verbose: bool = False) -> list:
+        """
+        Recommend top 3 products for a given condition.
+
+        Args:
+            condition: The skin condition to get recommendations for
+            verbose: If True, print detailed information during recommendation
+
+        Returns:
+            List of top 3 product recommendations with scores
+        """
+        if verbose:
+            print(f"Generating recommendations for: {condition}")
 
         beneficial_embedding = self.condition_embeddings[condition]
         harmful_embedding = self.harmful_embeddings[condition]
@@ -79,6 +91,9 @@ class SkincareRecommendationEngine:
         beneficial_similarities = np.array(beneficial_similarities)
         harmful_similarities = np.array(harmful_similarities)
 
+        if verbose:
+            print(f"  Calculated similarities for {len(beneficial_similarities)} products")
+
         scores = self.calculate_recommendation_score(beneficial_similarities, harmful_similarities)
 
         top_3 = np.argsort(scores)[::-1][:3]
@@ -86,7 +101,7 @@ class SkincareRecommendationEngine:
         recommendations = []
         for rank, idx in enumerate(top_3, 1):
             product = self.products_df.iloc[idx]
-            recommendations.append({
+            recommendation = {
                 'rank': rank,
                 'index': idx,
                 'name': product['name'],
@@ -97,7 +112,11 @@ class SkincareRecommendationEngine:
                 'score': scores[idx],
                 'beneficial_similarity': beneficial_similarities[idx],
                 'harmful_similarity': harmful_similarities[idx]
-            })
+            }
+            recommendations.append(recommendation)
+
+            if verbose:
+                print(f"  {rank}. {product['name']} (Score: {scores[idx]:.4f})")
 
         return recommendations
     

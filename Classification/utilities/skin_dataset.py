@@ -4,6 +4,9 @@ from PIL import Image
 import torch
 
 class SkinDataset(Dataset):
+    """
+    Class for dataset holding image paths and labels
+    """
     def __init__(self, image_paths, labels, transform=None):
         self.image_paths = image_paths
         self.labels = labels
@@ -24,6 +27,9 @@ class SkinDataset(Dataset):
 
     @staticmethod
     def get_transforms(train=True, input_size=224):
+        """
+        Normalize the images to ensure consistency when feeding into CNN
+        """
         if train:
             return transforms.Compose([
                 transforms.Resize((input_size, input_size)),

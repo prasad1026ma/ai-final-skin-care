@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from Classification.modeling.res_net import build_resnet
-from Classification.skin_dataset import SkinDataset
+from Classification.utilities.skin_dataset import SkinDataset
 import pandas as pd
 
 def load_model(model_path='best_model.pth', num_classes=5, device=None):

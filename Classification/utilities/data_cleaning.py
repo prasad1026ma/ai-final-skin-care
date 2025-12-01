@@ -1,8 +1,8 @@
 import ast
 import pandas as pd
 from pathlib import Path
-from Classification.constants import CONDITIONS
-from Classification.skin_dataset import SkinDataset
+from Classification.utilities.constants import CONDITIONS
+from Classification.utilities.skin_dataset import SkinDataset
 
 def process_scin_dataset(cases_csv_path, labels_csv_path, images_base_dir, output_csv):
     cases_df = pd.read_csv(cases_csv_path, dtype={'case_id': str})
@@ -126,12 +126,12 @@ def load_dataset(csv_path='dataset.csv'):
 if __name__ == "__main__":
     try:
         dataset_path = process_scin_dataset(
-            cases_csv_path='data/scin_cases.csv',
-            labels_csv_path='data/scin_labels.csv',
-            images_base_dir='data/images/',
+            cases_csv_path='../data/scin_cases.csv',
+            labels_csv_path='../data/scin_labels.csv',
+            images_base_dir='../data/images/',
             output_csv='data/dataset.csv'
         )
-        image_paths,labels = load_dataset('data/dataset.csv')
+        image_paths,labels = load_dataset('../data/dataset.csv')
         dataset = SkinDataset(
             image_paths,
             labels,

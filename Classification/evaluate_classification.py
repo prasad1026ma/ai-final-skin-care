@@ -1,7 +1,7 @@
 from Classification.utilities.constants import CONDITIONS
 from Classification.classification_pipeline import load_model
 from Classification.utilities.data_cleaning import process_scin_dataset, load_dataset
-from Classification.modeling.training import split_train_test
+from Classification.modeling.training import split_train_val_test
 from Classification.utilities.skin_dataset import SkinDataset
 
 import matplotlib.pyplot as plt
@@ -144,25 +144,40 @@ class ModelEvaluator:
 
     def plot_roc_curves(self, y_true, y_probs, save_path):
         """Plot ROC curves for each class."""
-        # create binary mapping for labels (1 if label matches prediction 0 else)
-        y_true_bin = label_binarize(y_true, classes=range(np.unique(y_true)))
+        # Get number of unique classes
+        n_classes = len(np.unique(y_true))
+
+        # Binarize the labels for one-vs-rest ROC calculation
+        y_true_bin = label_binarize(y_true, classes=range(n_classes))
+
+        # Handle edge case where there's only one class in y_true
+        if y_true_bin.shape[1] == 1:
+            print("Warning: Only one class present in y_true. Cannot generate ROC curves.")
+            return
+
         fig, ax = plt.subplots(figsize=(10, 8))
 
-        # iterate over all the classes and plot FPR vs TPR (to create the ROC curve)
-        for i in range(np.unique(y_true)):
+        # Plot ROC curve for each class
+        for i in range(n_classes):
             fpr, tpr, _ = roc_curve(y_true_bin[:, i], y_probs[:, i])
             auc = roc_auc_score(y_true_bin[:, i], y_probs[:, i])
-            ax.plot(fpr, tpr, label=f'{self.class_names[i]} (AUC = {auc:.2f})')
+            ax.plot(fpr, tpr, label=f'{self.class_names[i]} (AUC = {auc:.2f})', linewidth=2)
 
-        ax.plot([0, 1], [0, 1], 'k--', label='Random')
-        ax.set_xlabel('FPR')
-        ax.set_ylabel('TPR')
-        ax.set_title('ROC Curve')
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        # Plot random classifier line
+        ax.plot([0, 1], [0, 1], 'k--', label='Random Classifier', linewidth=2)
+
+        ax.set_xlabel('False Positive Rate', fontsize=12)
+        ax.set_ylabel('True Positive Rate', fontsize=12)
+        ax.set_title('ROC Curves - Multi-Class Classification', fontsize=14, fontweight='bold')
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
         ax.grid(alpha=0.3)
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
 
+        plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"ROC curves saved to {save_path}")
+        plt.close()
 
 
 def evaluate_model(model_path, test_dataset, test_loader, num_classes, class_names= CONDITIONS,
@@ -227,7 +242,6 @@ def evaluate_model(model_path, test_dataset, test_loader, num_classes, class_nam
 
 # Example usage
 if __name__ == "__main__":
-    # Assuming you have these from your train/test split function
     dataset_path = process_scin_dataset(
         cases_csv_path='data/scin_cases.csv',
         labels_csv_path='data/scin_labels.csv',
@@ -235,7 +249,7 @@ if __name__ == "__main__":
         output_csv='data/dataset.csv'
     )
     image_paths, labels = load_dataset('data/dataset.csv')
-    _,(test_paths, test_labels) = split_train_test(image_paths, labels)
+    _,_,(test_paths, test_labels) = split_train_val_test(image_paths, labels)
     test_transform = SkinDataset.get_transforms(train=False, input_size=224)
     test_dataset = SkinDataset(
         image_paths=test_paths,

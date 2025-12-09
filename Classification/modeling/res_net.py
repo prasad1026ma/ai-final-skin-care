@@ -2,13 +2,24 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
+class ResNet(nn.Module):
+    def __init__(self, num_classes=5):
+        super().__init__()
 
-def build_resnet(num_classes, pretrained=True):
-    model = models.resnet18(
-        weights=models.ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
-    )
+        # Pretrained Res-net
+        self.backbone = models.resnet18(pretrained=True)
 
-    in_features = model.fc.in_features
-    model.fc = nn.Linear(in_features, num_classes)
+        # Get number of features from the last layer
+        num_features = self.backbone.fc.in_features
 
-    return model
+        # Replace the final fully connected layer
+        self.backbone.fc = nn.Sequential(
+            nn.Dropout(0.4),
+            nn.Linear(num_features, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, num_classes)
+        )
+
+    def forward(self, x):
+        return self.backbone(x)

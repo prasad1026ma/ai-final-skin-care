@@ -1,14 +1,14 @@
 import torch
 import torch.nn as nn
 from PIL import Image
-from Classification.modeling.res_net import build_resnet
+from Classification.modeling.res_net import ResNet
 from Classification.utilities.skin_dataset import SkinDataset
 import pandas as pd
 
 def load_model(model_path='best_model.pth', num_classes=5, device=None):
     if device is None:
         device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
-    model = build_resnet(num_classes=num_classes)
+    model = ResNet(num_classes=num_classes)
     model.load_state_dict(torch.load(model_path, map_location=device)['model_state_dict'])
     model.to(device)
     model.eval()

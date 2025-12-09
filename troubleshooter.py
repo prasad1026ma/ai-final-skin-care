@@ -85,16 +85,6 @@ def print_confidence_bar(confidence):
 
     print(f"   {color}{bar}{Colors.ENDC} {confidence:.1f}%")
 
-
-def print_recommendation_header():
-    """Print header for recommendations section"""
-    print("\n" + Colors.BOLD + Colors.BLUE + "╔" + "═" * 68 + "╗" + Colors.ENDC)
-    print(Colors.BOLD + Colors.BLUE + "║" + Colors.ENDC +
-          Colors.BOLD + "               RECOMMENDED TREATMENT PRODUCTS               " +
-          Colors.BLUE + "║" + Colors.ENDC)
-    print(Colors.BOLD + Colors.BLUE + "╚" + "═" * 68 + "╝" + Colors.ENDC + "\n")
-
-
 def print_star_rating(rating):
     """Convert numeric rating to star display"""
     full_stars = int(rating)
@@ -103,22 +93,13 @@ def print_star_rating(rating):
 
     stars = "⭐" * full_stars + ("✨" if half_star else "") + "☆" * empty_stars
     return stars
-
-
-def print_recommendation_header():
-    """Print header for recommendations section"""
-    print("\n" + Colors.BOLD + Colors.BLUE + "═" * 70 + Colors.ENDC)
-    print(Colors.BOLD + Colors.BLUE + "           RECOMMENDED TREATMENT PRODUCTS           " + Colors.ENDC)
-    print(Colors.BOLD + Colors.BLUE + "═" * 70 + Colors.ENDC + "\n")
-
-
 def print_recommendation(recommendations):
     """Print recommendations with beautiful formatting"""
     if not recommendations:
         print(Colors.RED + "  No recommendations found for this condition." + Colors.ENDC)
         return
 
-    print_recommendation_header()
+    print(Colors.BOLD + Colors.BLUE + "           RECOMMENDED TREATMENT PRODUCTS           " + Colors.ENDC)
 
     for i, rec in enumerate(recommendations, 1):
         # Rank badge
@@ -179,15 +160,13 @@ def run_troubleshooter():
         print(Colors.RED + "Error: No image path provided!" + Colors.ENDC)
         return
 
-    input_size = 224
-
     # Loading animation
     print_loading_bar(duration=1.5)
 
     try:
         # Run classification
         print(Colors.CYAN + "Running Image Classification..." + Colors.ENDC)
-        predicted_class, confidence = run_classification_pipeline(image_path, input_size)
+        predicted_class, confidence = run_classification_pipeline(image_path, 224)
 
         # Display results
         print_diagnosis_box(predicted_class, confidence)
@@ -202,26 +181,6 @@ def run_troubleshooter():
         # Get recommendations
         recommendations = engine.recommend_top_3(predicted_class)
         print_recommendation(recommendations)
-
-        # Ask if user wants to save results
-        print(Colors.BOLD + "Would you like to save these results? (y/n): " + Colors.ENDC, end="")
-        save = input().strip().lower()
-
-        if save == 'y':
-            filename = f"diagnosis_{predicted_class.replace(' ', '_')}_{int(time.time())}.txt"
-            with open(filename, 'w') as f:
-                f.write(f"Skin Lesion Analysis Results\n")
-                f.write(f"{'=' * 50}\n\n")
-                f.write(f"Condition: {predicted_class}\n")
-                f.write(f"Confidence: {confidence:.2f}%\n\n")
-                f.write(f"Recommended Products:\n")
-                f.write(f"{'-' * 50}\n")
-                for i, rec in enumerate(recommendations, 1):
-                    f.write(f"\n{i}. {rec['brand']} - {rec['name']}\n")
-                    f.write(f"   Price: ${rec['price']:.2f} | Rating: {rec['rating']:.1f}/5\n")
-                    f.write(f"   Overall Score: {rec['score']:.3f}\n")
-
-            print(Colors.GREEN + f"Results saved to: {filename}" + Colors.ENDC)
 
         print(Colors.BOLD + Colors.GREEN + "Analysis complete! Thank You!" + Colors.ENDC)
 

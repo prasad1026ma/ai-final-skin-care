@@ -21,10 +21,17 @@
 
 ## Recommendation Algorithm
 
-
 ### Data Cleaning
-
+- Remove and clean ingredient and condition dataset
+- Tokenize
+- Embbed and Average Out dataset
 
 ### Model Training
+- Train Model on INCI Decoder matching
+- Cosine Similarity Function
 
 ### Model Analysis
+- Qualitative
+- TSNE Plot
+- Fuzzy Matching
+- Score Comparison through Ranking

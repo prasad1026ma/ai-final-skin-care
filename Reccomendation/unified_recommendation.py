@@ -114,12 +114,20 @@ def calculate_recommendation_score(beneficial_sim: np.ndarray, harmful_sim: np.n
 def apply_label_weights(scores: np.ndarray, products_df: pd.DataFrame) -> np.ndarray:
     weighted_scores = scores.copy()
 
+    max_price = products_df['price'].max()
+    min_price = products_df['price'].min()
+
     for idx in range(len(products_df)):
         label = products_df.iloc[idx]['Label']
+        price = products_df.iloc[idx]['price']
+
         if label == 'Moisturizer':
             weighted_scores[idx] *= 1.5
         elif label == 'Treatment':
             weighted_scores[idx] *= 1.15
+
+        price_factor = 1 + 0.3 * (1 - (price - min_price) / (max_price - min_price))
+        weighted_scores[idx] *= price_factor
 
     return weighted_scores
 

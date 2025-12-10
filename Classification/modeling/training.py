@@ -5,9 +5,11 @@ from Classification.utilities.skin_dataset import SkinDataset
 from Classification.utilities.data_cleaning import process_scin_dataset, load_dataset
 from sklearn.model_selection import train_test_split
 from Classification.modeling.res_net import ResNet
+from Classification.modeling.cnn import Cnn
 from Classification.utilities.constants import LABELS_CSV_PATH, IMAGES_BASE_DIR, CASES_CSV_PATH, OUTPUT_CSV, NUM_CLASSES
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
+import json
 
 
 def split_train_val_test(image_paths, labels, val_split=0.15, test_split=0.15):
@@ -100,7 +102,7 @@ def training_pipeline(image_paths, labels, num_classes, epochs=30, batch_size=32
     model = ResNet(num_classes=num_classes)
     model.to(device)
 
-    #     # class weighting due to class imbalances
+    # class weighting due to class imbalances
     classes = np.unique(train_labels)
     class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=train_labels)
     class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
@@ -117,11 +119,26 @@ def training_pipeline(image_paths, labels, num_classes, epochs=30, batch_size=32
     print(f"Test samples: {len(test_dataset)}")
     print(f"Number of classes: {num_classes}\n")
 
-    best_val_acc = 0.0
+    history = {
+        'train_acc': [],
+        'val_acc': [],
+        'train_loss': [],
+        'val_loss': []
+    }
 
+    best_val_acc = 0.0
+    best_val_loss = float('inf')
+    counter = 0
+    patience = 7
     for epoch in range(epochs):
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc = evaluate_model(model, val_loader, criterion, device)
+
+        history['train_acc'].append(train_acc)
+        history['val_acc'].append(val_acc)
+        history['train_loss'].append(train_loss)
+        history['val_loss'].append(val_loss)
+
 
         print(f"Epoch {epoch + 1}/{epochs} | "
               f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
@@ -131,6 +148,7 @@ def training_pipeline(image_paths, labels, num_classes, epochs=30, batch_size=32
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
+            best_val_loss = val_loss
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
@@ -138,10 +156,23 @@ def training_pipeline(image_paths, labels, num_classes, epochs=30, batch_size=32
                 'val_acc': val_acc,
             }, 'best_model.pth')
             print(f"New best model saved! (Val Acc: {val_acc:.2f}%)")
+        else:
+            counter += 1
+            print(f"No improvement ({counter}/{patience})")
+
+            # Early stopping
+        if counter >= patience:
+            print(f"Early stopping triggered at epoch {epoch + 1}")
+            print(f"Best validation loss: {best_val_loss:.4f} | Best validation acc: {best_val_acc:.2f}%")
+            break
+
+    with open('resnet_history.json', 'w') as f:
+        json.dump(history, f, indent=4)
+    print("Training history saved to resnet_history.json")
 
     print("Loading best model for final test evaluation")
     checkpoint = torch.load('best_model.pth')
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint['model_state_dict..'])
 
     test_loss, test_acc = evaluate_model(model, test_loader, criterion, device)
     print(f"FINAL TEST ACCURACY: {test_acc:.2f}%")

@@ -1,13 +1,3 @@
-"""
-Train Word2Vec model using Hugging Face cosmetic-ingredients dataset.
-
-This script provides an alternative to data_cleaning.pre_process_data()
-for training Word2Vec on a richer set of ingredient descriptions.
-
-Usage:
-    from train_cosmetic_word2vec import load_trained_model
-    model = load_trained_model()  # Loads the trained model
-"""
 
 import re
 from pathlib import Path
@@ -32,8 +22,6 @@ def load_cosmetic_dataset():
 
 
 def prepare_corpus(dataset) -> list:
-    """Prepare training corpus from dataset descriptions."""
-    print("Preparing corpus from ingredient descriptions...")
     corpus = []
 
     for item in dataset:
@@ -45,15 +33,7 @@ def prepare_corpus(dataset) -> list:
 
 
 def train_word2vec_cosmetic(save_path: str = "word2vec_cosmetic.model") -> Word2Vec:
-    """
-    Train Word2Vec model on cosmetic-ingredients dataset.
-
-    Args:
-        save_path: Path to save the trained model
-
-    Returns:
-        Trained Word2Vec model
-    """
+   
     print("Training Word2Vec on cosmetic-ingredients dataset...")
 
     # Load and prepare data
@@ -83,15 +63,6 @@ def train_word2vec_cosmetic(save_path: str = "word2vec_cosmetic.model") -> Word2
 
 
 def load_trained_model(model_path: str = "word2vec_cosmetic.model") -> Word2Vec:
-    """
-    Load a pre-trained Word2Vec model.
-
-    Args:
-        model_path: Path to the saved model
-
-    Returns:
-        Loaded Word2Vec model
-    """
     if not Path(model_path).exists():
         print(f"Model not found at {model_path}. Training new model...")
         return train_word2vec_cosmetic(model_path)
@@ -101,16 +72,7 @@ def load_trained_model(model_path: str = "word2vec_cosmetic.model") -> Word2Vec:
 
 
 def get_embedding(phrase: str, model: Word2Vec) -> np.ndarray:
-    """
-    Get embedding for a phrase using the Word2Vec model.
 
-    Args:
-        phrase: Text to embed
-        model: Word2Vec model
-
-    Returns:
-        Embedding vector
-    """
     words = clean_text(phrase)
     vectors = []
 
@@ -124,22 +86,4 @@ def get_embedding(phrase: str, model: Word2Vec) -> np.ndarray:
         return np.zeros(100)
 
 
-if __name__ == "__main__":
-    # Train and save model
-    model = train_word2vec_cosmetic()
 
-    # Test the model
-    print("\n" + "="*50)
-    print("Testing model on cosmetic terms:")
-    print("="*50)
-
-    test_terms = [
-        "moisturizing ingredients",
-        "soothing and hydrating",
-        "antioxidant benefits",
-        "gentle cleanser"
-    ]
-
-    for term in test_terms:
-        embedding = get_embedding(term, model)
-        print(f"\n'{term}': shape {embedding.shape}")

@@ -13,13 +13,10 @@ def clean_ingredient_text(text):
     stop_words = {'and', 'or', 'the', 'that', 'with', 'for', 'from', 'are', 'can', 'may',
                   'will', 'your', 'this', 'its', 'but', 'not', 'more', 'such', 'has', 'have',
                   'been', 'when', 'where', 'which', 'who', 'how', 'than', 'other', 'some',
-                  'also', 'into', 'only', 'over', 'just', 'like', 'their', 'they', 'them', 'free'}
+                  'also', 'into', 'only', 'over', 'just', 'like', 'their', 'they', 'them'}
 
     text = re.sub(r'\([^)]*\)', '', text)
     text = text.lower()
-
-    # Remove "word-free" or "word free" patterns (e.g., "paraben-free", "sulfate free")
-    text = re.sub(r'\b\w+[\s\-]free\b', '', text)
 
     ingredients = [ingredient.strip() for ingredient in text.split(',')]
 

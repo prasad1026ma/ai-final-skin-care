@@ -122,7 +122,7 @@ def apply_label_weights(scores: np.ndarray, products_df: pd.DataFrame) -> np.nda
         price = products_df.iloc[idx]['price']
 
         if label == 'Moisturizer':
-            weighted_scores[idx] *= 1.5
+            weighted_scores[idx] *= 1.3
         elif label == 'Treatment':
             weighted_scores[idx] *= 1.15
 

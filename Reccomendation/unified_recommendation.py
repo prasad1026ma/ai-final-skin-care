@@ -5,16 +5,12 @@ from transformers import AutoTokenizer, AutoModel
 from gensim.models import Word2Vec
 from data_cleaning import clean_ingredient_text, pre_process_data
 
-
-# ==============================================================================
-# EMBEDDING MODEL CONFIGURATION
-# ==============================================================================
 # Choose your embedding model:
-#   - "csv" (Word2Vec trained on your CSV data - fast)
-#   - "cosmetic" (Word2Vec trained on Hugging Face cosmetic-ingredients - richer)
-#   - "scibert" (Scientific papers focus)
-#   - "biobert" (Biomedical literature focus)
-#   - "chembert" (Chemistry compounds focus)
+#   - "csv" (Word2Vec trained on your CSV data)
+#   - "cosmetic" (Word2Vec trained on Hugging Face cosmetic-ingredients))
+#   - "scibert" 
+#   - "biobert" 
+#   - "chembert" 
 EMBEDDING_MODEL = "cosmetic"
 
 TRANSFORMER_MODEL_NAMES = {
@@ -41,32 +37,25 @@ class EmbeddingProvider:
             self._init_transformer(model_type)
 
     def _init_word2vec_csv(self):
-        """Initialize Word2Vec model trained on CSV data."""
-        print("Training Word2Vec model from CSV data...")
         self.model = pre_process_data()
 
     def _init_word2vec_cosmetic(self):
-        """Initialize Word2Vec model trained on Hugging Face cosmetic-ingredients dataset."""
         try:
             from train_cosmetic_word2vec import load_trained_model
-            print("Loading Word2Vec model from Hugging Face cosmetic-ingredients dataset...")
             self.model = load_trained_model()
         except ImportError:
-            print("train_cosmetic_word2vec not found. Falling back to CSV method...")
             self.model = pre_process_data()
 
     def _init_transformer(self, model_type: str):
-        """Initialize transformer-based model (SciBERT, BioBERT, ChemBERT)."""
         model_name = TRANSFORMER_MODEL_NAMES.get(model_type)
         if not model_name:
             raise ValueError(f"Unknown model type: {model_type}")
 
-        print(f"Loading {model_type.upper()} model...")
+        print(f"Loading {model_type.upper()} model")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
-        print(f"✓ {model_type.upper()} model ready")
 
     def get_embedding(self, text: str) -> np.ndarray:
         if pd.isna(text) or not text:
@@ -101,7 +90,7 @@ class EmbeddingProvider:
 
         return embedding
 
-
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 '''
 Cosine Similarity Function 
@@ -120,9 +109,7 @@ def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
 Recommemdation Scoring
 '''
 def calculate_recommendation_score(beneficial_sim: np.ndarray, harmful_sim: np.ndarray) -> np.ndarray:
-    # Stronger penalty for harmful similarities: exp(-4 * harmful_sim)
-    # Scaled up by 10x to make scores more readable
-    return 10 * beneficial_sim * np.exp(-4 * harmful_sim)
+    return beneficial_sim * np.exp(-harmful_sim)
 
 def apply_label_weights(scores: np.ndarray, products_df: pd.DataFrame) -> np.ndarray:
     weighted_scores = scores.copy()
@@ -233,9 +220,6 @@ class UnifiedSkincareRecommendationEngine:
         return beneficial, harmful
 
 def main():
-    print("="*70)
-    print(f"Using {EMBEDDING_MODEL.upper()} embedding model")
-    print("="*70)
 
     engine = UnifiedSkincareRecommendationEngine(
         products_path='cosmetic_p.csv',
@@ -250,14 +234,7 @@ def main():
     except ValueError as e:
         print(f"Error: {e}")
 
-    print("\n" + "="*70)
-    print("To switch embedding models, change EMBEDDING_MODEL at the top:")
-    print('  EMBEDDING_MODEL = "csv"       # Word2Vec on your data (fast)')
-    print('  EMBEDDING_MODEL = "cosmetic"  # Word2Vec on Hugging Face (richer)')
-    print('  EMBEDDING_MODEL = "scibert"   # Scientific papers')
-    print('  EMBEDDING_MODEL = "biobert"   # Biomedical literature')
-    print('  EMBEDDING_MODEL = "chembert"  # Chemistry compounds')
-    print("="*70)
+   
 
 if __name__ == "__main__":
     main()

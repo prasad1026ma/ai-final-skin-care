@@ -1,3 +1,22 @@
 /Classification/data/images/
 best_model.pth
 Classification/modeling/best_model.pth
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS files
+.DS_Store
+
+# Model files
+*.model
+
+# Generated plots
+*.png
+all_embeddings_plots/
+
+# Models directory
+models/

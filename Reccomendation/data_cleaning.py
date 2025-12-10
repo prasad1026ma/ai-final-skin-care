@@ -2,6 +2,7 @@ import pandas as pd
 from gensim.models import Word2Vec
 import re
 import numpy as np
+from difflib import SequenceMatcher
 
 
 def clean_ingredient_text(text):
@@ -19,6 +20,17 @@ def clean_ingredient_text(text):
         ingredients_cleaned.extend([w for w in words if len(w) > 2])
 
     return ingredients_cleaned
+
+
+def fuzzy_match_ingredients(target_list, product_list, threshold=0.8):
+    """Find fuzzy matches between target ingredients and product ingredients."""
+    matches = set()
+    for target in target_list:
+        for product in product_list:
+            similarity = SequenceMatcher(None, target.lower(), product.lower()).ratio()
+            if similarity >= threshold:
+                matches.add(product)
+    return matches
 
 
 def prepare_word_dict(df_ingredients, df_products):
@@ -63,8 +75,8 @@ def sentence_embeddings(phrase: str, model: Word2Vec) -> np.ndarray:
 
 
 def pre_process_data():
-    df_ingredients = pd.read_csv("Reccomendation/dermatology_ingredients.csv")
-    df_products = pd.read_csv("Reccomendation/cosmetic_p.csv")
+    df_ingredients = pd.read_csv("dermatology_ingredients.csv")
+    df_products = pd.read_csv("cosmetic_p.csv")
 
     print("Data loaded successfully")
     print("Training Word2Vec model:")

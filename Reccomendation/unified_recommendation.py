@@ -109,7 +109,7 @@ def cosine_similarity(vec_a: np.ndarray, vec_b: np.ndarray) -> float:
 Recommemdation Scoring
 '''
 def calculate_recommendation_score(beneficial_sim: np.ndarray, harmful_sim: np.ndarray) -> np.ndarray:
-    return beneficial_sim * np.exp(-harmful_sim)
+    return (beneficial_sim ** 1.2) * np.exp(-2 * harmful_sim)
 
 def apply_label_weights(scores: np.ndarray, products_df: pd.DataFrame) -> np.ndarray:
     weighted_scores = scores.copy()
@@ -117,9 +117,9 @@ def apply_label_weights(scores: np.ndarray, products_df: pd.DataFrame) -> np.nda
     for idx in range(len(products_df)):
         label = products_df.iloc[idx]['Label']
         if label == 'Moisturizer':
-            weighted_scores[idx] *= 1.3
+            weighted_scores[idx] *= 1.5
         elif label == 'Treatment':
-            weighted_scores[idx] *= 1.3
+            weighted_scores[idx] *= 1.15
 
     return weighted_scores
 

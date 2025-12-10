@@ -8,8 +8,18 @@ from difflib import SequenceMatcher
 def clean_ingredient_text(text):
     if pd.isna(text):
         return []
+
+    # Common stop words to filter out
+    stop_words = {'and', 'or', 'the', 'that', 'with', 'for', 'from', 'are', 'can', 'may',
+                  'will', 'your', 'this', 'its', 'but', 'not', 'more', 'such', 'has', 'have',
+                  'been', 'when', 'where', 'which', 'who', 'how', 'than', 'other', 'some',
+                  'also', 'into', 'only', 'over', 'just', 'like', 'their', 'they', 'them', 'free'}
+
     text = re.sub(r'\([^)]*\)', '', text)
     text = text.lower()
+
+    # Remove "word-free" or "word free" patterns (e.g., "paraben-free", "sulfate free")
+    text = re.sub(r'\b\w+[\s\-]free\b', '', text)
 
     ingredients = [ingredient.strip() for ingredient in text.split(',')]
 
@@ -17,7 +27,7 @@ def clean_ingredient_text(text):
     for ingredient in ingredients:
         # Split on spaces and hyphens
         words = re.split(r'[\s\-]+', ingredient)
-        ingredients_cleaned.extend([w for w in words if len(w) > 2])
+        ingredients_cleaned.extend([w for w in words if len(w) > 2 and w not in stop_words])
 
     return ingredients_cleaned
 

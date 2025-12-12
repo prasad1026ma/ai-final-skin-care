@@ -1,10 +1,4 @@
-"""
-Plot embeddings of top 3 recommendations from the unified recommendation engine.
-
-This script visualizes how the top 3 recommended products relate to
-beneficial and harmful ingredients for each skin condition using the
-unified recommendation system.
-"""
+# AI has been used to make the plots verbose and pretty. 
 
 import pandas as pd
 import numpy as np

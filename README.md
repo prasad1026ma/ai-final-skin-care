@@ -1,4 +1,4 @@
-# ai-final-skin-care
+# Derma Assist: Skin Leision Classification and Reccomendation Pipeline
 
 ## Classification Pipeline
 
